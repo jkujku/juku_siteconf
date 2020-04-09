@@ -1,0 +1,168 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Default" />
+<f:section name="content">
+	<h2>Parameters seen by controller</h2>
+	<dl>
+		<dt>param0</dt><dd>{param0}</dd>
+		<dt>param1</dt><dd>{param1}</dd>
+		<dt>param2</dt><dd>{param2}</dd>
+	</dl>
+
+	<h2>Site configuration variants</h2>
+	<p>Just added the spaces at routePath inside { } to avoid fluid parsing.</p>
+	<p>The custom ValueMapper removes all non-numbers from string.</p>
+
+	<hr>
+
+	<h3>With aspects</h3>
+
+	<pre>
+routeEnhancers:
+  filter:
+    type: Plugin
+    routePath: '/filter/{ param0}/{ param1}/{ param2}'
+    namespace: 'tx_jukusiteconf_myplugin'
+    defaults:
+      param0: ''
+      param1: ''
+      param2: ''
+    aspects:
+      param0:
+        type: MyValueMapper
+      param1:
+        type: MyValueMapper
+      param2:
+        type: MyValueMapper
+	</pre>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}">{f:uri.page(absolute: '1')}</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17/19">{f:uri.page(absolute: '1')}/filter/13/17/19</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/xx17/19">{f:uri.page(absolute: '1')}/filter/13/xx17/19</a>
+	</p>
+	<p>
+		<b>PAGE NOT EXISTS ERROR:</b> <a href="{f:uri.page(absolute: '1')}/filter/13//19">{f:uri.page(absolute: '1')}/filter/13//19</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17">{f:uri.page(absolute: '1')}/filter/13/17</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter">{f:uri.page(absolute: '1')}/filter</a>
+	</p>
+
+	<hr>
+
+	<h3>With requirements</h3>
+
+	<pre>
+routeEnhancers:
+  filter:
+    type: Plugin
+    routePath: '/filter/{ param0}/{ param1}/{ param2}'
+    namespace: 'tx_jukusiteconf_myplugin'
+    defaults:
+      param0: ''
+      param1: ''
+      param2: ''
+    requirements:
+      param0: '[0-9]{0,3}'
+      param1: '[0-9]{0,3}'
+      param2: '[0-9]{0,3}'
+	</pre>
+
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}">{f:uri.page(absolute: '1')}</a>
+	</p>
+	<p>
+		<b>CHASH ERROR:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17/19">{f:uri.page(absolute: '1')}/filter/13/17/19</a>
+	</p>
+	<p>
+		<b>CHASH ERROR:</b> <a href="{f:uri.page(absolute: '1')}/filter/13//19">{f:uri.page(absolute: '1')}/filter/13//19</a>
+	</p>
+	<p>
+		<b>CHASH ERROR:</b> <a href="{f:uri.page(absolute: '1')}/filter/13">{f:uri.page(absolute: '1')}/filter/13/</a>
+	</p>
+	<hr>
+	<h3>With aspects and requirements</h3>
+
+	<pre>
+routeEnhancers:
+  filter:
+    type: Plugin
+    routePath: '/filter/{ param0}/{ param1}/{ param2}'
+    namespace: 'tx_jukusiteconf_myplugin'
+    defaults:
+      param0: ''
+      param1: ''
+      param2: ''
+    requirements:
+      param0: '[0-9]{0,3}'
+      param1: '[0-9]{0,3}'
+      param2: '[0-9]{0,3}'
+    aspects:
+      param0:
+        type: MyValueMapper
+      param1:
+        type: MyValueMapper
+      param2:
+        type: MyValueMapper
+	</pre>
+
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}">{f:uri.page(absolute: '1')}</a>
+	</p>
+	<p>
+		<b>RESULT IS param0="131719" ?!?</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17/19">{f:uri.page(absolute: '1')}/filter/13/17/19</a>
+	</p>
+	<p>
+		<b>RESULT IS param0="1319" ?!?</b> <a href="{f:uri.page(absolute: '1')}/filter/13//19">{f:uri.page(absolute: '1')}/filter/13//19</a>
+	</p>
+
+	<hr>
+
+	<h3>My "solution" seems to be an hack?</h3>
+	<p>This works only if the parameters are excludes from cHash. And it does not work with the ValueMapper.</p>
+	<p>
+	LocalConfiguration.php:	'FE' => ['cacheHash' => ['excludedParameters' => ['tx_jukusiteconf_myplugin[param0]', 'tx_jukusiteconf_myplugin[param1]','tx_jukusiteconf_myplugin[param2]', ],]
+	</p>
+
+	<pre>
+routeEnhancers:
+  filter:
+    type: Plugin
+    routePath: '/filter/{ param0}/{ param1}/{ param2}'
+    namespace: 'tx_jukusiteconf_myplugin'
+    defaults:
+      param0: ''
+      param1: ''
+      param2: ''
+    requirements:
+      param0: '[^\/]{0,}'
+      param1: '[^\/]{0,}'
+      param2: '[^\/]{0,}'
+	</pre>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}">{f:uri.page(absolute: '1')}</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17/19">{f:uri.page(absolute: '1')}/filter/13/17/19</a>
+	</p>
+	<p>
+		<b>WORKS (but no value mapping):</b> <a href="{f:uri.page(absolute: '1')}/filter/13/xx17/19">{f:uri.page(absolute: '1')}/filter/13/xx17/19</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13//19">{f:uri.page(absolute: '1')}/filter/13//19</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter/13/17">{f:uri.page(absolute: '1')}/filter/13/17</a>
+	</p>
+	<p>
+		<b>WORKS:</b> <a href="{f:uri.page(absolute: '1')}/filter">{f:uri.page(absolute: '1')}/filter</a>
+	</p>
+
+
+</f:section>
+</html>
